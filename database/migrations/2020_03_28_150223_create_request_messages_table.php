@@ -18,7 +18,6 @@ class CreateRequestMessagesTable extends Migration
             $table->text('body');
             $table->string('attachment', 32)->nullable();
             $table->unsignedInteger('request_id');
-            $table->timestamps();
 
             $table->foreign('request_id')->references('id')->on('requests')->onDelete('cascade');
         });

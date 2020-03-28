@@ -19,6 +19,7 @@ class CreateRequestsTable extends Migration
             $table->unsignedInteger('client_id');
             $table->unsignedInteger('manager_id');
             $table->boolean('status')->nullable();
+            $table->timestamps();
 
             $table->foreign('client_id')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('manager_id')->references('id')->on('users')->onDelete('cascade');
