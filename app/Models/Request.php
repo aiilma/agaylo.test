@@ -10,6 +10,11 @@ class Request extends Model
         'subject', 'client_id', 'manager_id', 'status',
     ];
 
+    public function getStatus()
+    {
+        return $this->status === 0 ? 'Закрытая' : 'Открытая';
+    }
+
     /* RELATIONS */
     public function dialogue()
     {
@@ -23,6 +28,6 @@ class Request extends Model
 
     public function manager()
     {
-        return $this->belongsTo(Request::class, 'manager_id', 'id');
+        return $this->belongsTo(User::class, 'manager_id', 'id');
     }
 }

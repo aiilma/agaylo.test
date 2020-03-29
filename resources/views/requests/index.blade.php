@@ -5,6 +5,14 @@
 
         @if (auth()->user()->isManager())
             @include('ui.filter')
+        @else
+            <div class="row py-1">
+                <div class="col-3">
+                    <div class="btn-group special" role="group" aria-label="Basic example">
+                        <a class="btn btn-info" href="{{route('requests.create')}}" role="button">Создать</a>
+                    </div>
+                </div>
+            </div>
         @endif
 
         <div class="row">
@@ -20,17 +28,18 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <tr>
-                        <th scope="row">1</th>
-                        <td>Саб</td>
-                        <td>manager@agaylo.test</td>
-                        <td>Открыто</td>
-                        <td>
-                            <button type="button" class="btn btn-primary"><i class="far fa-eye"></i></button>
-                            <button type="button" class="btn btn-success"><i class="fas fa-edit"></i></button>
-                            <button type="button" class="btn btn-danger"><i class="far fa-trash-alt"></i></button>
-                        </td>
-                    </tr>
+
+
+                    @foreach(auth()->user()->requests as $r)
+                        @component('components.request-item', [
+                            'id' => $r->id,
+                            'subject' => $r->subject,
+                            'email' => $r->manager ? $r->manager->email : 'Нет менеджера',
+                            'statusText' => $r->getStatus()
+                            ])
+                        @endcomponent
+                    @endforeach
+
                     </tbody>
                 </table>
             </div>
