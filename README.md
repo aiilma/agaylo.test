@@ -1,6 +1,6 @@
-.env:
-MANAGER_EMAIL
+.env:\
+MANAGER_EMAIL\
 MANAGER_PASSWORD
 
-commands:
+commands:\
 php artisan migrate:fresh --seed

@@ -10,6 +10,8 @@ class Role extends Model
         'name'
     ];
 
+    public $timestamps = false;
+
 
     /* RELATIONS */
     public function users()

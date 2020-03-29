@@ -38,10 +38,24 @@ class User extends Authenticatable
     ];
 
 
+    public function isManager()
+    {
+        foreach ($this->roles as $role) {
+            if ($role->name === 'manager') return true;
+        }
+
+        return false;
+    }
+
 
     /* RELATIONS */
     public function roles()
     {
         return $this->belongsToMany(Role::class, 'user_roles');
+    }
+
+    public function requests()
+    {
+        return $this->hasMany(Request::class, 'client_id', 'id');
     }
 }
