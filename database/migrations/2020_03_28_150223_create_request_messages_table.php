@@ -16,7 +16,7 @@ class CreateRequestMessagesTable extends Migration
         Schema::create('request_messages', function (Blueprint $table) {
             $table->increments('id');
             $table->text('body');
-            $table->string('attachment', 32)->nullable();
+            $table->string('attachment', 45)->nullable();
             $table->unsignedInteger('request_id');
 
             $table->foreign('request_id')->references('id')->on('requests')->onDelete('cascade');

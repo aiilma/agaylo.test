@@ -8,6 +8,14 @@
                     <div class="card-header">{{ $caption }}</div>
 
                     <div class="card-body">
+                        @if ($message = Session::get('success'))
+                            @include('ui.alerts.success', ['message' => $message])
+                        @endif
+
+                        @if ($message = Session::get('error'))
+                            @include('ui.alerts.error', ['message' => $message])
+                        @endif
+
                         @yield('form-inner')
                     </div>
                 </div>

@@ -17,7 +17,7 @@ class CreateRequestsTable extends Migration
             $table->increments('id');
             $table->string('subject');
             $table->unsignedInteger('client_id');
-            $table->unsignedInteger('manager_id');
+            $table->unsignedInteger('manager_id')->nullable();
             $table->boolean('status')->nullable();
             $table->timestamps();
 

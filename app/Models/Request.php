@@ -15,4 +15,14 @@ class Request extends Model
     {
         return $this->hasMany(RequestMessage::class, 'request_id', 'id');
     }
+
+    public function client()
+    {
+        return $this->belongsTo(User::class, 'client_id', 'id');
+    }
+
+    public function manager()
+    {
+        return $this->belongsTo(Request::class, 'manager_id', 'id');
+    }
 }

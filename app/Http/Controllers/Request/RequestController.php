@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Request;
 
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use App\Models\Request as SupportRequest;
 
 class RequestController extends Controller
 {
@@ -30,18 +32,45 @@ class RequestController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function store(Request $request)
     {
-        return __method__;
+        $params = $request->except('_token');
+        $user = auth()->user();
+
+        // если прошло N времени с момента добавления последней заявки, то можно добавить еще одну заявку
+        $recentlyRequests = $user->requests()->where('created_at', '>', Carbon::parse('-24 hours'));
+
+        if ($recentlyRequests->get()->isNotEmpty()) {
+            $futureDt = $recentlyRequests->first()->created_at->addHours(24);
+            $expire = $futureDt->diffForHumans();
+            return back()->with('error', "Вы можете отправить еще одну заявку $expire");
+        }
+
+        $fileName = null;
+        if ($request->hasFile('attachment')) {
+            $fileStoragePath = $request->attachment->store('support/attachments');
+            $fileFullPath = storage_path("app/$fileStoragePath");
+            $fileName = basename($fileFullPath);
+        }
+
+        SupportRequest::create([
+            'subject' => $params['subject'],
+            'client_id' => $user->id,
+        ])->dialogue()->create([
+            'body' => $params['body'],
+            'attachment' => $fileName,
+        ]);
+
+        return back()->with('success', "ОК");
     }
 
     /**
      * Display the specified resource.
      *
-     * @param  int  $id
+     * @param int $id
      * @return \Illuminate\Http\Response
      */
     public function show($id)
@@ -52,7 +81,7 @@ class RequestController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  int  $id
+     * @param int $id
      * @return \Illuminate\Http\Response
      */
     public function edit($id)
@@ -63,8 +92,8 @@ class RequestController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
+     * @param \Illuminate\Http\Request $request
+     * @param int $id
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, $id)
@@ -75,7 +104,7 @@ class RequestController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  int  $id
+     * @param int $id
      * @return \Illuminate\Http\Response
      */
     public function destroy($id)
