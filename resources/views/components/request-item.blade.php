@@ -4,14 +4,17 @@
     <td>{{$email}}</td>
     <td>{{$statusText}}</td>
     <td>
-        <a role="button" class="btn btn-primary" href="#">
-            <i class="far fa-eye"></i>
-        </a>
-        <a role="button" class="btn btn-success" href="#">
-            <i class="fas fa-edit"></i>
-        </a>
-        <a role="button" class="btn btn-danger" href="#">
-            <i class="far fa-trash-alt"></i>
-        </a>
+        <form action="{{route("requests.update", $id)}}" method="POST">
+            {{ csrf_field() }}
+            @method('PUT')
+
+            <a role="button" class="btn btn-success" href="{{route("requests.show", $id)}}">
+                <i class="fas fa-edit"></i>
+            </a>
+
+            <button type="submit" class="btn btn-danger">
+                <i class="far fa-window-close"></i>
+            </button>
+        </form>
     </td>
 </tr>

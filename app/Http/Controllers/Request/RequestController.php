@@ -59,6 +59,7 @@ class RequestController extends Controller
         SupportRequest::create([
             'subject' => $params['subject'],
             'client_id' => $user->id,
+            'manager_id' => 1 // можно убрать (тогда любой другой менеджер должен быть выставлен вручную в БД)
         ])->dialogue()->create([
             'body' => $params['body'],
             'attachment' => $fileName,
@@ -98,7 +99,7 @@ class RequestController extends Controller
      */
     public function update(Request $request, $id)
     {
-        return __method__;
+        return $id;
     }
 
     /**
