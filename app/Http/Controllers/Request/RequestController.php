@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Request;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\SendRequestLetterJob;
+use App\Filter\RequestsFilter;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\Request as SupportRequest;
@@ -26,13 +27,15 @@ class RequestController extends Controller
         $user = auth()->user();
 
         if ($user->isManager()) {
-            $requests = SupportRequest::all();
+//            $reqs = SupportRequest::all();
+            $reqs = SupportRequest::with('dialogue');
 
+            $reqs = (new RequestsFilter($reqs, $request))->apply()->get();
         } else {
-            $requests = $user->requests;
+            $reqs = $user->requests;
         }
 
-        return response()->view('requests.index', ['requests' => $requests,]);
+        return response()->view('requests.index', ['requests' => $reqs,]);
     }
 
     /**
