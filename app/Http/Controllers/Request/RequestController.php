@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers\Request;
 
+use App\Attachment\Attachment;
 use App\Http\Controllers\Controller;
 use App\Jobs\SendRequestLetterJob;
 use App\Filter\RequestsFilter;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\Request as SupportRequest;
 
 class RequestController extends Controller
 {
+    protected $HOURS_LIM = 24;
+
     public function __construct()
     {
         $this->middleware('auth');
@@ -20,17 +22,15 @@ class RequestController extends Controller
      * Display a listing of the resource.
      *
      * @param Request $request
+     * @param RequestsFilter $filters
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
+    public function index(Request $request, RequestsFilter $filters)
     {
         $user = auth()->user();
 
         if ($user->isManager()) {
-//            $reqs = SupportRequest::all();
-            $reqs = SupportRequest::with('dialogue');
-
-            $reqs = (new RequestsFilter($reqs, $request))->apply()->get();
+            $reqs = SupportRequest::with('dialogue')->filter($filters)->get();
         } else {
             $reqs = $user->requests;
         }
@@ -56,36 +56,34 @@ class RequestController extends Controller
      */
     public function store(Request $request)
     {
-        $params = $request->except('_token');
+        $HOURS_LIM = $this->HOURS_LIM;
         $user = auth()->user();
 
-        // если прошло N времени с момента добавления последней заявки, то можно добавить еще одну заявку
-        $recentlyRequests = $user->requests()->where('created_at', '>', Carbon::parse('-24 hours'));
+        // если прошло N часов с момента добавления последней заявки, то можно добавить еще одну заявку
+        $recentlyRequests = $user->recentlyRequests($HOURS_LIM);
 
         if ($recentlyRequests->get()->isNotEmpty()) {
-            $futureDt = $recentlyRequests->first()->created_at->addHours(24);
-            $expire = $futureDt->diffForHumans();
-            return back()->with('error', "Вы можете отправить еще одну заявку $expire");
+            $message = "Вы можете отправить еще одну заявку {$recentlyRequests->getExpireForNextRequest($HOURS_LIM)}";
+            return back()->with('error', $message);
         }
 
-        $fileName = null;
-        if ($request->hasFile('attachment')) {
-            $fileStoragePath = $request->attachment->store('support/attachments');
-            $fileFullPath = storage_path("app/$fileStoragePath");
-            $fileName = basename($fileFullPath);
-        }
+        $this->saveNewRequest($request);
+        return back()->with('success', "ОК");
+    }
 
-        SupportRequest::create([
-            'subject' => $params['subject'],
+    private function saveNewRequest($request)
+    {
+        $user = auth()->user();
+        $fileName = (new Attachment($request))->saveToDisk();
+        return SupportRequest::create([
+            'subject' => $request->subject,
             'client_id' => $user->id,
 //            'manager_id' => 1 // можно убрать (тогда любой другой менеджер должен принять заявку самостоятельно)
         ])->dialogue()->create([
-            'body' => $params['body'],
+            'body' => $request->body,
             'attachment' => $fileName,
-            'author_id' => $user->id
+            'author_id' => $user->id,
         ]);
-
-        return back()->with('success', "ОК");
     }
 
     /**
@@ -96,9 +94,8 @@ class RequestController extends Controller
      */
     public function show($id)
     {
-        $req = SupportRequest::find($id);
         $user = auth()->user();
-
+        $req = SupportRequest::find($id);
         $newMessages = $req->getNewMessages($user->id)->get();
 
         if ($newMessages->isNotEmpty()) {
@@ -120,8 +117,8 @@ class RequestController extends Controller
      */
     public function update($id)
     {
-        $user = auth()->user();
         $req = SupportRequest::find($id);
+        $user = auth()->user();
 
         if ($user->isManager() && $req->manager_id !== $user->id) {
             $req->manager_id = $user->id;
@@ -135,13 +132,14 @@ class RequestController extends Controller
      * Remove the specified resource from storage.
      *
      * @param int $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
     public function destroy($id)
     {
         $req = SupportRequest::find($id);
+        $user = auth()->user();
 
-        if (!auth()->user()->isManager() && $req->status !== 0) {
+        if (!$user->isManager() && $req->status !== 0) {
             $req->status = 0;
             $req->save();
         }

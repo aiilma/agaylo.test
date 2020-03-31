@@ -2,19 +2,22 @@
 
 namespace App\Filter;
 
+use Illuminate\Http\Request;
+
 class RequestsFilter
 {
     protected $builder;
     protected $request;
 
-    public function __construct($builder, $request)
+    public function __construct(Request $request)
     {
-        $this->builder = $builder;
         $this->request = $request;
     }
 
-    public function apply()
+    public function apply($builder)
     {
+        $this->builder = $builder;
+
         foreach ($this->request->all() as $name => $value) {
             if (method_exists($this, $name)) {
                 $this->$name($value);

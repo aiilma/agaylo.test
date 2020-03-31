@@ -15,6 +15,16 @@ class Request extends Model
         return $this->dialogue()->where('is_checked', 0)->where('author_id', '!=', $id);
     }
 
+    public function scopeGetExpireForNextRequest($query, $hoursLim)
+    {
+        return $query->first()->created_at->addHours($hoursLim)->diffForHumans();
+    }
+
+    public function scopeFilter($query, $filters)
+    {
+        return $filters->apply($query);
+    }
+
     /* RELATIONS */
     public function dialogue()
     {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Request;
 
+use App\Attachment\Attachment;
 use App\Http\Controllers\Controller;
 use App\Jobs\SendRequestLetterJob;
 use Illuminate\Http\Request;
@@ -9,6 +10,7 @@ use App\Models\Request as SupportRequest;
 
 class RequestMessageController extends Controller
 {
+
     public function __construct()
     {
         $this->middleware('auth');
@@ -18,38 +20,44 @@ class RequestMessageController extends Controller
      * Store a newly created resource in storage.
      *
      * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function store(Request $request)
     {
-        $user = auth()->user();
-        $params = $request->except('_token');
-        $req = SupportRequest::find($params['id']);
+        $req = SupportRequest::find($request->id);
 
-        $fileName = null;
-        if ($request->hasFile('attachment')) {
-            $fileStoragePath = $request->attachment->store('support/attachments');
-            $fileFullPath = storage_path("app/$fileStoragePath");
-            $fileName = basename($fileFullPath);
-        }
-
-        $req->dialogue()->create([
-            'body' => $params['body'],
-            'attachment' => $fileName,
-            'author_id' => $user->id,
-        ]);
-
-        $details = [];
-        if ($user->isManager()) {
-            $details['email'] = $req->client->email;
-            $details['message'] = 'Вам ответил менеджер';
-        } else {
-            $details['email'] = $req->manager->email;
-            $details['message'] = 'Поступил ответ клиента';
-        }
-
-        dispatch(new SendRequestLetterJob($details));
+        $this->saveNewMessage($request, $req);
+        $this->sendLetter($req);
 
         return back()->with('success', "ОК");
     }
+
+    private function saveNewMessage($request, $req)
+    {
+        $user = auth()->user();
+        $fileName = (new Attachment($request))->saveToDisk();
+
+        return $req->dialogue()->create([
+            'body' => $request->body,
+            'attachment' => $fileName,
+            'author_id' => $user->id,
+        ]);
+    }
+
+    private function sendLetter($req)
+    {
+        $user = auth()->user();
+        $letter = [];
+
+        if ($user->isManager()) {
+            $letter['email'] = $req->client->email;
+            $letter['message'] = 'Вам ответил менеджер';
+        } else {
+            $letter['email'] = $req->manager !== null ? $req->manager->email : null;
+            $letter['message'] = 'Поступил ответ клиента';
+        }
+
+        if ($letter['email'] !== null) dispatch(new SendRequestLetterJob($letter));
+    }
+
 }

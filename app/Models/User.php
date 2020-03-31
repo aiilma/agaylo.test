@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -47,6 +48,10 @@ class User extends Authenticatable
         return false;
     }
 
+    public function scopeRecentlyRequests($query, $hours)
+    {
+        return $this->requests()->where('created_at', '>', Carbon::parse("-$hours hours"));
+    }
 
     /* RELATIONS */
     public function roles()

@@ -13,6 +13,12 @@ class UserSeeder extends Seeder
      */
     public function run()
     {
+        DB::statement('SET FOREIGN_KEY_CHECKS = 0');
+
+        User::truncate();
+        DB::table('user_roles')->truncate();
+        DB::table('roles')->truncate();
+
         // roles
         DB::table('roles')->insert([
             ['name' => 'client'],
@@ -31,5 +37,7 @@ class UserSeeder extends Seeder
             'user_id' => $user->id,
             'role_id' => 2,
         ]);
+
+        DB::statement('SET FOREIGN_KEY_CHECKS = 1');
     }
 }

@@ -11,7 +11,7 @@
             <form action="{{route('messages.store', ['id' => $id])}}" method="POST">
                 {{csrf_field()}}
 
-                <input name="body" type="text" class="write_msg" placeholder="Введите сообщение..."/>
+                <input name="body" type="text" class="write_msg" placeholder="Введите сообщение..." required/>
                 <input id="attachment" type="file" class="@error('attachment') is-invalid @enderror" name="attachment"
                        autofocus>
                 <button class="msg_send_btn btn btn-outline-info" type="sumbit">Отправить</button>
