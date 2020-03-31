@@ -5,7 +5,7 @@
     <div class="col-md-6">
         <input id="{{$name}}" type="file"
                class="@error($name) is-invalid @enderror" name="{{$name}}"
-               required autofocus>
+               autofocus>
 
         @error($name)
         <span class="invalid-feedback" role="alert">

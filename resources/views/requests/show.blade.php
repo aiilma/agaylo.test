@@ -1,31 +1,14 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="container">
-        <div class="row">
-
-            <div class="col-sm-12 col-sm-offset-12 frame">
-                <ul>
-                    <li style="width:100%">
-                        <div class="msj macro">
-                            <div class="text text-l">
-                                <p>aa</p>
-                            </div>
-                        </div>
-                    </li>
-                    <li style="width:100%;">
-                        <div class="msj-rta macro">
-                            <div class="text text-r">
-                                <p>hey</p>
-                            </div>
-                        </div>
-                    </li>
-                </ul>
-                <div>
-
-                </div>
-            </div>
-
-        </div>
-    </div>
+    @component('layouts.dialogue', ['req' => $req,])
+        @slot('messages')
+            @foreach($req->dialogue as $msg)
+                @component('components.message-item', [
+                    'isOutgoing' => auth()->user()->id === $msg->author->id,
+                    'msg' => $msg->body,
+                    ])@endcomponent
+            @endforeach
+        @endslot
+    @endcomponent
 @endsection

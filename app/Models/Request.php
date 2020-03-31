@@ -10,9 +10,9 @@ class Request extends Model
         'subject', 'client_id', 'manager_id', 'status',
     ];
 
-    public function getStatus()
+    public function getNewMessages($id)
     {
-        return $this->status === 0 ? 'Закрытая' : 'Открытая';
+        return $this->dialogue()->where('is_checked', 0)->where('author_id', '!=', $id);
     }
 
     /* RELATIONS */

@@ -3,20 +3,36 @@
 namespace App\Http\Controllers\Request;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\SendRequestLetterJob;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\Request as SupportRequest;
 
 class RequestController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('auth');
+    }
+
     /**
      * Display a listing of the resource.
      *
+     * @param Request $request
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        return response()->view('requests.index');
+        $user = auth()->user();
+
+        if ($user->isManager()) {
+            $requests = SupportRequest::all();
+
+        } else {
+            $requests = $user->requests;
+        }
+
+        return response()->view('requests.index', ['requests' => $requests,]);
     }
 
     /**
@@ -59,10 +75,11 @@ class RequestController extends Controller
         SupportRequest::create([
             'subject' => $params['subject'],
             'client_id' => $user->id,
-            'manager_id' => 1 // можно убрать (тогда любой другой менеджер должен быть выставлен вручную в БД)
+//            'manager_id' => 1 // можно убрать (тогда любой другой менеджер должен принять заявку самостоятельно)
         ])->dialogue()->create([
             'body' => $params['body'],
             'attachment' => $fileName,
+            'author_id' => $user->id
         ]);
 
         return back()->with('success', "ОК");
@@ -71,23 +88,24 @@ class RequestController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param int $id
+     * @param SupportRequest $req
      * @return \Illuminate\Http\Response
      */
     public function show($id)
     {
-        return response()->view('requests.show');
-    }
+        $req = SupportRequest::find($id);
+        $user = auth()->user();
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        return response()->view('requests.edit');
+        $newMessages = $req->getNewMessages($user->id)->get();
+
+        if ($newMessages->isNotEmpty()) {
+            foreach ($newMessages as $msg) {
+                $msg->is_checked = 1;
+                $msg->save();
+            }
+        }
+
+        return response()->view('requests.show', compact('req'));
     }
 
     /**
@@ -97,9 +115,17 @@ class RequestController extends Controller
      * @param int $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update($id)
     {
-        return $id;
+        $user = auth()->user();
+        $req = SupportRequest::find($id);
+
+        if ($user->isManager() && $req->manager_id !== $user->id) {
+            $req->manager_id = $user->id;
+            $req->save();
+        }
+
+        return response()->view('requests.show', compact('req'));
     }
 
     /**
@@ -110,6 +136,19 @@ class RequestController extends Controller
      */
     public function destroy($id)
     {
-        return __method__;
+        $req = SupportRequest::find($id);
+
+        if (!auth()->user()->isManager() && $req->status !== 0) {
+            $req->status = 0;
+            $req->save();
+        }
+
+        $details = [
+            'email' => $req->manager->email,
+            'message' => 'Клиент закрыл заявку',
+        ];
+        dispatch(new SendRequestLetterJob($details));
+
+        return redirect(route('requests.index'));
     }
 }

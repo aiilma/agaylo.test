@@ -18,8 +18,11 @@ class CreateRequestMessagesTable extends Migration
             $table->text('body');
             $table->string('attachment', 45)->nullable();
             $table->unsignedInteger('request_id');
+            $table->unsignedInteger('author_id');
+            $table->boolean('is_checked')->default(0);
 
             $table->foreign('request_id')->references('id')->on('requests')->onDelete('cascade');
+            $table->foreign('author_id')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

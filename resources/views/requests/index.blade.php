@@ -2,7 +2,6 @@
 
 @section('content')
     <div class="container">
-
         @if (auth()->user()->isManager())
             @include('ui.filter')
         @else
@@ -23,6 +22,7 @@
                         <th scope="col">ID</th>
                         <th scope="col">Тема</th>
                         <th scope="col">Менеджер</th>
+                        <th scope="col">Новые сообщения</th>
                         <th scope="col">Статус</th>
                         <th scope="col">Действия</th>
                     </tr>
@@ -30,12 +30,13 @@
                     <tbody>
 
 
-                    @foreach(auth()->user()->requests as $r)
+                    @foreach($requests as $r)
                         @component('components.request-item', [
                             'id' => $r->id,
                             'subject' => $r->subject,
                             'email' => $r->manager ? $r->manager->email : 'Нет менеджера',
-                            'statusText' => $r->getStatus()
+                            'newMessagesCount' => $r->getNewMessages(auth()->user()->id)->count(),
+                            'status' => $r->status,
                             ])
                         @endcomponent
                     @endforeach

@@ -58,4 +58,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Request::class, 'client_id', 'id');
     }
+
+    public function messages()
+    {
+        return $this->hasMany(RequestMessage::class, 'author_id', 'id');
+    }
 }

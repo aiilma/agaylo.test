@@ -21,8 +21,8 @@ class UserSeeder extends Seeder
 
         // manager
         $user = User::create([
-            'name' => 'agaylo manager',
-            'email' => env('MANAGER_EMAIL', 'manager@agaylo.test'),
+            'name' => 'agilo manager',
+            'email' => env('MANAGER_EMAIL', 'manager@agilo.test'),
             'password' => Hash::make(env('MANAGER_PASSWORD', 'dvorak')),
         ]);
 

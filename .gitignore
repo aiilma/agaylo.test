@@ -15,3 +15,4 @@ yarn-error.log
 # vitaly-mortikov
 Тестовое Laravel.pdf
 /.idea
+/storage/app/support
