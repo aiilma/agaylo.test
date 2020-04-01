@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Request;
 
-use App\Attachment\Attachment;
 use App\Http\Controllers\Controller;
 use App\Jobs\SendRequestLetterJob;
 use App\Filter\RequestsFilter;
+use App\Services\Attachment\Attachment;
 use Illuminate\Http\Request;
 use App\Models\Request as SupportRequest;
 
@@ -45,6 +45,7 @@ class RequestController extends Controller
      */
     public function create()
     {
+        $this->authorize('create', SupportRequest::class);
         return response()->view('requests.create');
     }
 
@@ -59,16 +60,19 @@ class RequestController extends Controller
         $HOURS_LIM = $this->HOURS_LIM;
         $user = auth()->user();
 
-        // если прошло N часов с момента добавления последней заявки, то можно добавить еще одну заявку
-        $recentlyRequests = $user->recentlyRequests($HOURS_LIM);
+        if ($user->can('create', SupportRequest::class)) {
+            // если прошло N часов с момента добавления последней заявки, то можно добавить еще одну заявку
+            $recentlyRequests = $user->recentlyRequests($HOURS_LIM);
 
-        if ($recentlyRequests->get()->isNotEmpty()) {
-            $message = "Вы можете отправить еще одну заявку {$recentlyRequests->getExpireForNextRequest($HOURS_LIM)}";
-            return back()->with('error', $message);
+            if ($recentlyRequests->get()->isNotEmpty()) {
+                $message = "Вы можете отправить еще одну заявку {$recentlyRequests->getExpireForNextRequest($HOURS_LIM)}";
+                return back()->with('error', $message);
+            }
+
+            $this->saveNewRequest($request);
+        } else {
+            return back()->with('error', "Вы должны иметь привелегии пользователя");
         }
-
-        $this->saveNewRequest($request);
-        return back()->with('success', "ОК");
     }
 
     private function saveNewRequest($request)
@@ -109,7 +113,7 @@ class RequestController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Manager accepts a new request
      *
      * @param \Illuminate\Http\Request $request
      * @param int $id
@@ -120,7 +124,7 @@ class RequestController extends Controller
         $req = SupportRequest::find($id);
         $user = auth()->user();
 
-        if ($user->isManager() && $req->manager_id !== $user->id) {
+        if ($user->can('acceptRequest', $req)) {
             $req->manager_id = $user->id;
             $req->save();
         }
@@ -139,16 +143,19 @@ class RequestController extends Controller
         $req = SupportRequest::find($id);
         $user = auth()->user();
 
-        if (!$user->isManager() && $req->status !== 0) {
+        if ($user->can('close', $req) && $req->isOpened()) {
             $req->status = 0;
             $req->save();
-        }
 
-        $details = [
-            'email' => $req->manager->email,
-            'message' => 'Клиент закрыл заявку',
-        ];
-        dispatch(new SendRequestLetterJob($details));
+            // note manager if exists
+            if ($email = $req->getManagerEmail()) {
+                $details = [
+                    'email' => $email,
+                    'message' => 'Клиент закрыл заявку',
+                ];
+                dispatch(new SendRequestLetterJob($details));
+            }
+        }
 
         return redirect(route('requests.index'));
     }

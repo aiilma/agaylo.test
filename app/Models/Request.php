@@ -10,6 +10,16 @@ class Request extends Model
         'subject', 'client_id', 'manager_id', 'status',
     ];
 
+    public function isOpened()
+    {
+        return $this->status !== 0;
+    }
+
+    public function getManagerEmail()
+    {
+        return $this->manager !== null ? $this->manager->email : null;
+    }
+
     public function getNewMessages($id)
     {
         return $this->dialogue()->where('is_checked', 0)->where('author_id', '!=', $id);

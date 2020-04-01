@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Attachment;
+namespace App\Services\Attachment;
 
 use Illuminate\Http\Request;
 

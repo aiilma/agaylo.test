@@ -2,7 +2,7 @@
 
 @section('content')
     <div class="container">
-        @if (auth()->user()->isManager())
+        @can('filter', App\Models\Request::class)
             @include('ui.filter')
         @else
             <div class="row py-1">
@@ -12,7 +12,7 @@
                     </div>
                 </div>
             </div>
-        @endif
+        @endcan
 
         <div class="row">
             <div class="col-12">

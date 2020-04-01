@@ -11,7 +11,7 @@
 
                     </div>
 
-                    @if ($req->status !== 0)
+                    @if ($req->isOpened())
                         @component('components.dialogue.input', [
                             'id' => $req->id,
                             'isManager' => auth()->user()->isManager(),

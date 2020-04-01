@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Request;
 
-use App\Attachment\Attachment;
+use App\Services\Attachment\Attachment;
 use App\Http\Controllers\Controller;
 use App\Jobs\SendRequestLetterJob;
 use Illuminate\Http\Request;

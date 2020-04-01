@@ -21,5 +21,10 @@ class RequestMessage extends Model
         return $this->belongsTo(User::class, 'author_id', 'id');
     }
 
+    public function isOutgoing()
+    {
+        return auth()->user()->id === $this->author->id;
+    }
+
     public $timestamps = false;
 }
