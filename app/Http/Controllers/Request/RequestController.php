@@ -85,6 +85,7 @@ class RequestController extends Controller
     public function show($id)
     {
         $user = auth()->user();
+
         $req = SupportRequest::findOrFail($id);
 
         RequestService::read($user, $req);
@@ -120,6 +121,7 @@ class RequestController extends Controller
     public function destroy($id)
     {
         $user = auth()->user();
+
         $req = SupportRequest::findOrFail($id);
 
         if ($user->can('close', $req)) {
