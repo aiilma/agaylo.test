@@ -4,7 +4,7 @@ namespace App\Services\Attachment;
 
 use Illuminate\Http\Request;
 
-class Attachment
+class AttachmentService
 {
     protected $request;
 
