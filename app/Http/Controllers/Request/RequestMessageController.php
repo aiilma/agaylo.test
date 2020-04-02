@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Request;
 
-use App\Services\Attachment\Attachment;
 use App\Http\Controllers\Controller;
 use App\Jobs\SendRequestLetterJob;
+use App\Services\Attachment\AttachmentService;
 use Illuminate\Http\Request;
 use App\Models\Request as SupportRequest;
 
@@ -35,7 +35,7 @@ class RequestMessageController extends Controller
     private function saveNewMessage($request, $req)
     {
         $user = auth()->user();
-        $fileName = (new Attachment($request))->saveToDisk();
+        $fileName = (new AttachmentService($request))->saveToDisk();
 
         return $req->dialogue()->create([
             'body' => $request->body,
